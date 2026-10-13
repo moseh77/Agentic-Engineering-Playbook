@@ -1,0 +1,1127 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Agentic Engineering Playbook</title>
+<meta name="description" content="A full teaching breakdown of the two-layer system behind a real production build with Claude Code: the JS Mastery workflow-skill chain (scope → architect → develop → check → test → document → sync) and a complete, annotated AGENTS.md contract file.">
+
+<style>
+  :root{
+    --ink:#fbfaf7;
+    --surface:#ffffff;
+    --surface-2:#f3f1ea;
+    --border:#ddd8ca;
+    --text:#1c1a14;
+    --text-dim:#6b6553;
+    --accent:#b8650f;
+    --accent-soft:#f2e3cf;
+    --accent-2:#1f6f6f;
+    --accent-2-soft:#dcefed;
+    --good:#2f7d4f;
+    --good-soft:#e1f1e6;
+    --warn:#b8650f;
+    --crit:#b3362c;
+    --crit-soft:#f6e2df;
+    --mono: 'IBM Plex Mono', ui-monospace, monospace;
+    --sans: 'IBM Plex Sans', system-ui, sans-serif;
+    --display: 'Instrument Serif', Georgia, serif;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ink:#121212;
+      --surface:#191814;
+      --surface-2:#1f1e18;
+      --border:#36332a;
+      --text:#f1ede2;
+      --text-dim:#a59e8a;
+      --accent:#e3a15a;
+      --accent-soft:#3a2d1a;
+      --accent-2:#5fc4bf;
+      --accent-2-soft:#17302e;
+      --good:#79d19a;
+      --good-soft:#163024;
+      --warn:#e3a15a;
+      --crit:#e38379;
+      --crit-soft:#331f1d;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#121212;
+    --surface:#191814;
+    --surface-2:#1f1e18;
+    --border:#36332a;
+    --text:#f1ede2;
+    --text-dim:#a59e8a;
+    --accent:#e3a15a;
+    --accent-soft:#3a2d1a;
+    --accent-2:#5fc4bf;
+    --accent-2-soft:#17302e;
+    --good:#79d19a;
+    --good-soft:#163024;
+    --warn:#e3a15a;
+    --crit:#e38379;
+    --crit-soft:#331f1d;
+    color-scheme: dark;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    background:var(--ink);
+    color:var(--text);
+    font-family:var(--sans);
+    font-size:15.5px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{ background:var(--accent-soft); color:var(--text); }
+
+  h1,h2,h3,h4{ font-family:var(--display); font-weight:600; text-wrap:balance; margin:0; }
+  code, .mono, .k{ font-family:var(--mono); }
+
+  a{ color:var(--accent-2); }
+
+  .wrap{ max-width:1180px; margin:0 auto; padding-inline: clamp(16px, 4vw, 48px); }
+
+  /* ---------- top bar ---------- */
+  .topbar{
+    position:sticky; top:env(safe-area-inset-top,0px); z-index:40;
+    background:color-mix(in srgb, var(--ink) 88%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom:1px solid var(--border);
+  }
+  .topbar-inner{
+    max-width:1180px; margin:0 auto; padding-inline: clamp(16px,4vw,48px);
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+    height:52px;
+  }
+  .brand{ display:flex; align-items:center; gap:8px; font-family:var(--mono); font-size:13px; letter-spacing:.02em; color:var(--text-dim); }
+  .brand b{ color:var(--text); font-weight:600; }
+  .brand .dot{ width:7px; height:7px; border-radius:50%; background:var(--good); box-shadow:0 0 0 3px var(--good-soft); }
+  .topnav{ display:flex; gap:16px; font-family:var(--mono); font-size:12.3px; }
+  .topnav a{ color:var(--text-dim); text-decoration:none; }
+  .topnav a:hover{ color:var(--accent); }
+  @media (max-width:900px){ .topnav{ display:none; } }
+
+  /* ---------- layout: rail + content ---------- */
+  .layout{ display:grid; grid-template-columns: 230px minmax(0,1fr); gap:56px; padding-block: 40px 100px; }
+  @media (max-width:900px){ .layout{ grid-template-columns: 1fr; } }
+
+  .rail{ position:sticky; top:72px; align-self:start; max-height:calc(100vh - 90px); overflow-y:auto; }
+  @media (max-width:900px){ .rail{ display:none; } }
+  .rail-title{ font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--text-dim); margin-bottom:10px; }
+  .rail ol{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:1px; border-left:1px solid var(--border); }
+  .rail a{ display:block; text-decoration:none; color:var(--text-dim); font-size:12.6px; padding:5px 0 5px 14px; border-left:2px solid transparent; margin-left:-1px; transition:color .15s; }
+  .rail a .n{ font-family:var(--mono); color:var(--text-dim); margin-right:6px; font-size:10.5px; }
+  .rail a:hover{ color:var(--text); }
+  .rail a.active{ color:var(--accent); border-left-color:var(--accent); }
+  .rail a.active .n{ color:var(--accent); }
+  .rail .sub-link{ padding-left:28px; font-size:12px; }
+
+  main{ min-width:0; display:flex; flex-direction:column; gap:84px; }
+  section{ scroll-margin-top:72px; }
+
+  .eyebrow{ font-family:var(--mono); font-size:11.5px; text-transform:uppercase; letter-spacing:.1em; color:var(--accent); display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+  .eyebrow .n{ display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:4px; background:var(--accent-soft); color:var(--accent); font-size:10.5px; }
+  h2{ font-size:clamp(26px,3.4vw,36px); margin-bottom:14px; }
+  h3{ font-size:20px; margin-bottom:8px; }
+  .lede{ color:var(--text-dim); font-size:16px; max-width:70ch; margin-bottom:28px; }
+  .prose{ max-width:72ch; }
+  .prose p{ margin:0 0 14px; color: var(--text); }
+  .prose p:last-child{ margin-bottom:0; }
+  .prose.dim p{ color:var(--text-dim); }
+
+  /* ---------- hero ---------- */
+  .hero{ padding-top:56px; display:flex; flex-direction:column; gap:26px; max-width:980px; }
+  .hero .kicker{ font-family:var(--mono); font-size:12.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--text-dim); display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .hero .kicker .pill{ font-family:var(--mono); font-size:11px; padding:3px 8px; border-radius:20px; background:var(--good-soft); color:var(--good); border:1px solid color-mix(in srgb, var(--good) 35%, transparent); }
+  .hero h1{ font-size:clamp(36px,5.6vw,60px); line-height:1.05; letter-spacing:-.01em; }
+  .hero h1 em{ font-style:italic; color:var(--accent); }
+  .hero .sub{ font-size:18px; color:var(--text-dim); max-width:66ch; }
+  .hero-stats{ display:flex; flex-wrap:wrap; gap:0; border:1px solid var(--border); border-radius:10px; overflow:hidden; margin-top:6px; background:var(--surface); }
+  .hero-stat{ flex:1 1 150px; padding:16px 18px; border-right:1px solid var(--border); }
+  .hero-stat:last-child{ border-right:none; }
+  .hero-stat .num{ font-family:var(--display); font-size:24px; font-weight:600; color:var(--text); }
+  .hero-stat .lbl{ font-family:var(--mono); font-size:10.5px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.04em; margin-top:2px; }
+
+  .source-banner{
+    display:flex; align-items:center; gap:14px; flex-wrap:wrap; justify-content:space-between;
+    border:1px solid var(--border); background:var(--accent-soft); border-radius:10px; padding:14px 18px;
+  }
+  .source-banner .st{ font-size:13.8px; color:var(--text); }
+  .source-banner a.btn{
+    font-family:var(--mono); font-size:12.5px; text-decoration:none; color:var(--ink); background:var(--accent);
+    padding:7px 13px; border-radius:7px; white-space:nowrap; font-weight:600;
+  }
+
+  /* ---------- generic card ---------- */
+  .card{ background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+  .card-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:11px 16px; border-bottom:1px solid var(--border); background:var(--surface-2); flex-wrap:wrap; }
+  .card-head .tag{ font-family:var(--mono); font-size:12px; color:var(--accent); }
+  .card-head .fname{ font-family:var(--mono); font-size:11.5px; color:var(--text-dim); }
+  .card-body{ padding:18px 20px; }
+  .card-body p{ margin:0 0 10px; color:var(--text-dim); font-size:14.5px; }
+  .card-body p:last-child{ margin-bottom:0; }
+
+  pre.code{ font-family:var(--mono); font-size:12.6px; line-height:1.65; color:var(--text); background:var(--surface-2); border-top:1px solid var(--border); padding:16px 20px; margin:0; overflow-x:auto; white-space:pre; }
+  pre.code .c{ color:var(--text-dim); }
+  pre.code .k{ color:var(--accent); }
+  pre.code .s{ color:var(--accent-2); }
+
+  /* ---------- pipeline (generic numbered chain) ---------- */
+  .pipeline{ display:flex; flex-direction:column; gap:0; border-left:2px solid var(--border); margin-left:9px; }
+  .pstep{ position:relative; padding:0 0 26px 28px; }
+  .pstep:last-child{ padding-bottom:0; }
+  .pstep::before{ content:attr(data-n); position:absolute; left:-21px; top:0; width:38px; height:38px; border-radius:50%; background:var(--surface); border:2px solid var(--border); display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:13px; color:var(--text-dim); }
+  .pstep.gate::before{ border-color:var(--accent); color:var(--accent); background:var(--accent-soft); }
+  .pstep .ph{ font-weight:600; font-size:15.5px; margin-bottom:4px; }
+  .pstep .pd{ color:var(--text-dim); font-size:14px; max-width:62ch; }
+  .pstep .gate-chip{ display:inline-flex; align-items:center; gap:6px; margin-top:8px; font-family:var(--mono); font-size:11.5px; color:var(--accent); background:var(--accent-soft); border:1px solid color-mix(in srgb, var(--accent) 35%, transparent); padding:3px 9px; border-radius:20px; }
+
+  /* ---------- skill cards (the workflow chain) ---------- */
+  .skillchain{ display:flex; flex-direction:column; gap:16px; }
+  .skillcard{ border:1px solid var(--border); border-radius:12px; background:var(--surface); overflow:hidden; }
+  .skillcard-head{ display:flex; align-items:center; gap:12px; padding:14px 18px; border-bottom:1px solid var(--border); background:var(--surface-2); flex-wrap:wrap; }
+  .skillcard-num{ font-family:var(--mono); font-size:11px; color:var(--text-dim); flex:none; width:20px; }
+  .skillcard-cmd{ font-family:var(--mono); font-weight:600; font-size:15px; color:var(--accent); }
+  .skillcard-role{ margin-left:auto; font-family:var(--mono); font-size:10.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--accent-2); background:var(--accent-2-soft); padding:3px 9px; border-radius:20px; }
+  .skillcard-body{ padding:16px 18px; display:flex; flex-direction:column; gap:12px; }
+  .skillcard-body p{ margin:0; font-size:14px; color:var(--text-dim); }
+  .skillcard-body p strong{ color:var(--text); }
+  .iorow{ display:grid; grid-template-columns:90px 1fr; gap:8px; font-size:13px; }
+  @media (max-width:560px){ .iorow{ grid-template-columns:1fr; } }
+  .iorow .k2{ font-family:var(--mono); color:var(--text-dim); text-transform:uppercase; font-size:10.5px; letter-spacing:.05em; padding-top:2px; }
+  .iorow .v2{ color:var(--text); font-family:var(--mono); font-size:12.6px; }
+  .iorow .v2 code{ background:var(--surface-2); border:1px solid var(--border); padding:1px 6px; border-radius:5px; }
+
+  /* ---------- section file-card grid (AGENTS.md anatomy) ---------- */
+  .anatomy{ display:flex; flex-direction:column; gap:14px; }
+  .anat-row{ display:grid; grid-template-columns: 200px minmax(0,1fr); gap:0; border:1px solid var(--border); border-radius:10px; overflow:hidden; background:var(--surface); }
+  @media (max-width:700px){ .anat-row{ grid-template-columns:1fr; } }
+  .anat-key{ background:var(--surface-2); padding:14px 16px; border-right:1px solid var(--border); display:flex; flex-direction:column; gap:4px; justify-content:center; }
+  @media (max-width:700px){ .anat-key{ border-right:none; border-bottom:1px solid var(--border); } }
+  .anat-key .sec{ font-family:var(--mono); font-size:11px; color:var(--accent); letter-spacing:.04em; }
+  .anat-key .title{ font-weight:600; font-size:14.5px; }
+  .anat-body{ padding:14px 18px; display:flex; flex-direction:column; gap:10px; }
+  .anat-body p{ font-size:13.9px; color:var(--text-dim); margin:0; }
+  .anat-body code{ background:var(--accent-soft); color:var(--accent); padding:1px 5px; border-radius:4px; font-size:12.3px; }
+  .anat-body pre.code{ border:1px solid var(--border); border-radius:8px; margin-top:2px; }
+
+  .spec-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  @media (max-width:640px){ .spec-grid{ grid-template-columns:1fr; } }
+  .spec-item{ display:flex; gap:10px; align-items:flex-start; border:1px solid var(--border); border-radius:8px; padding:10px 12px; background:var(--surface); font-size:13.5px; }
+  .spec-item .chk{ flex:none; width:16px; height:16px; border-radius:4px; background:var(--good-soft); color:var(--good); display:flex; align-items:center; justify-content:center; font-size:10px; margin-top:2px; }
+
+  .env-table{ width:100%; border-collapse:collapse; font-size:12.8px; }
+  .env-table th, .env-table td{ text-align:left; padding:8px 10px; border-bottom:1px solid var(--border); vertical-align:top; }
+  .env-table th{ font-family:var(--mono); font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--text-dim); }
+  .env-table td.vn{ font-family:var(--mono); color:var(--accent-2); white-space:nowrap; }
+  .env-table td.exp{ font-family:var(--mono); font-size:11.5px; color:var(--text-dim); white-space:nowrap; }
+
+  /* ---------- principle callouts ---------- */
+  .principles{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+  @media (max-width:800px){ .principles{ grid-template-columns:1fr; } }
+  .principle{ border:1px solid var(--border); border-radius:12px; padding:18px; background:var(--surface); }
+  .principle .pn{ font-family:var(--mono); font-size:11px; color:var(--accent); margin-bottom:8px; }
+  .principle h4{ font-size:15.5px; margin-bottom:8px; font-family:var(--display); font-weight:600; }
+  .principle p{ font-size:13.6px; color:var(--text-dim); margin:0; }
+
+  .callout{ display:flex; gap:12px; border:1px solid color-mix(in srgb, var(--crit) 35%, var(--border)); background:var(--crit-soft); border-radius:10px; padding:14px 16px; }
+  .callout .ic{ flex:none; font-family:var(--mono); color:var(--crit); font-weight:700; }
+  .callout p{ margin:0; font-size:13.8px; color:var(--text); }
+  .callout.good{ border-color:color-mix(in srgb, var(--good) 35%, var(--border)); background:var(--good-soft); }
+  .callout.good .ic{ color:var(--good); }
+
+  /* ---------- replicate checklist ---------- */
+  .checklist{ display:flex; flex-direction:column; gap:10px; }
+  .citem{ display:flex; gap:12px; align-items:flex-start; padding:14px 16px; border:1px solid var(--border); border-radius:10px; background:var(--surface); }
+  .citem .num{ font-family:var(--display); font-weight:600; font-size:18px; color:var(--accent); flex:none; width:28px; }
+  .citem h4{ font-size:14.5px; margin-bottom:4px; font-family:var(--sans); font-weight:600; }
+  .citem p{ font-size:13.6px; color:var(--text-dim); margin:0; }
+
+  .divider{ height:1px; background:var(--border); margin:4px 0; }
+
+  footer{ border-top:1px solid var(--border); margin-top:20px; }
+  .foot-inner{ max-width:1180px; margin:0 auto; padding:28px clamp(16px,4vw,48px) 40px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+  .foot-inner .mono{ font-size:12px; color:var(--text-dim); }
+
+  @media (prefers-reduced-motion: reduce){ *{ transition:none !important; animation:none !important; } }
+</style>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand"><span class="dot"></span> <b>Agentic Engineering</b>&nbsp;Playbook</div>
+    <nav class="topnav">
+      <a href="#source">Where it's from</a>
+      <a href="#skillchain">Skill chain</a>
+      <a href="#goldenpath">Golden path</a>
+      <a href="#agentsmd">AGENTS.md</a>
+      <a href="#replicate">Build your own</a>
+    </nav>
+  </div>
+</div>
+
+<div class="wrap layout">
+  <nav class="rail" aria-label="Section navigation">
+    <div class="rail-title">On this page</div>
+    <ol id="railList">
+      <li><a href="#intro" data-n="00">Two layers, stacked</a></li>
+      <li><a href="#source" data-n="01">Where this framework is from</a></li>
+      <li><a href="#skillchain" data-n="02">The workflow skill chain</a></li>
+      <li><a href="#goldenpath" data-n="03">The golden path, end to end</a></li>
+      <li><a href="#agentsmd" data-n="04">AGENTS.md, fully annotated</a></li>
+      <li><a href="#am-1" class="sub-link">1–2 Product &amp; workflow</a></li>
+      <li><a href="#am-3" class="sub-link">3–4 Skills &amp; prompt files</a></li>
+      <li><a href="#am-5" class="sub-link">5–7 Architecture, stack, data</a></li>
+      <li><a href="#am-8" class="sub-link">8–12 Standing rules</a></li>
+      <li><a href="#am-13" class="sub-link">13–17 Security &amp; checks</a></li>
+      <li><a href="#connection" data-n="05">How the two layers meet</a></li>
+      <li><a href="#replicate" data-n="06">Build your own</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <section class="hero" id="intro">
+      <div class="kicker">
+        Long-form teaching breakdown <span style="color:var(--border)">·</span> Claude Code
+      </div>
+      <h1>Two layers make Claude<br>build like an <em>engineer</em>, not a vending machine.</h1>
+      <p class="sub">
+        This is the full system behind a real, still-running production build done almost entirely through
+        Claude Code — written for anyone who wants to get genuinely good at building with AI, not just
+        prompt it into a demo. It's two stacked layers: a <strong>process framework</strong> (a chain of
+        skills — scope, architect, develop, check, test, document, sync) that governs how any single piece
+        of work moves from idea to shipped code, and a <strong>project contract</strong> (<code class="mono">AGENTS.md</code>)
+        that gives Claude durable, re-read-every-session memory of this specific codebase's rules. Neither
+        one alone is enough. Together they're the difference between "an AI wrote some code" and a
+        reviewable, auditable engineering process.
+      </p>
+
+      <div class="hero-stats">
+        <div class="hero-stat"><div class="num">17</div><div class="lbl">contract sections</div></div>
+        <div class="hero-stat"><div class="num">8</div><div class="lbl">workflow skills</div></div>
+        <div class="hero-stat"><div class="num">10</div><div class="lbl">required prompt‑file fields</div></div>
+        <div class="hero-stat"><div class="num">0</div><div class="lbl">lines written before approval</div></div>
+      </div>
+    </section>
+
+    <!-- ============ 01 SOURCE ============ -->
+    <section id="source">
+      <div class="eyebrow"><span class="n">01</span> Where this comes from</div>
+      <h2>The process layer isn't invented here — go get it</h2>
+      <p class="lede">
+        The scope → architect → develop → check → test → document → sync chain is a published skill
+        pack, not a private trick. It's taught as the "Agentic Engineering" workflow by
+        <strong>Adrian Hajdin at JS Mastery</strong>, and it's the thing that turned this project from
+        "a bunch of ad-hoc Claude Code sessions" into something that behaves like a real engineering
+        process over months of continuous work.
+      </p>
+
+      <div class="source-banner">
+        <div class="st">Install guides, the full skill set, and the reasoning behind each step live at:</div>
+        <a class="btn" href="https://jsmastery.com/workflow-guides" target="_blank" rel="noopener">jsmastery.com/workflow-guides →</a>
+      </div>
+
+      <div class="prose" style="margin-top:22px;">
+        <p>
+          Practically, these arrive as Claude Code <strong>skills</strong> — markdown files with a frontmatter
+          description Claude reads to decide when to self-invoke, typically dropped into a skills directory
+          (project-scoped under <code class="mono">.claude/skills/</code>, or available globally) and triggered
+          either by name (<code class="mono">/scope</code>, <code class="mono">/architect</code>…) or automatically
+          when the task shape matches the skill's own description. You don't have to memorize when to call
+          which one — if you phrase your request naturally ("let's plan the next feature," "build this page,"
+          "is this ready to ship") the matching skill self-triggers, because its description was written to
+          match exactly that kind of request.
+        </p>
+        <p>
+          There's also a bootstrapping skill worth knowing by name: <code class="mono">/audit</code>. Run it
+          on a greenfield project, or point it at one area of an existing codebase
+          (<code class="mono">/audit src/auth</code>), and it writes the first <code class="mono">AGENTS.md</code>
+          (plus thin <code class="mono">CLAUDE.md</code> pointers) every later skill in this chain then reads.
+          It only adds what's missing — it never overwrites curated content you've already written by hand.
+          That's genuinely the fastest way to start: don't write your contract file from a blank page, audit
+          your way to a first draft and then hand-edit it.
+        </p>
+      </div>
+    </section>
+
+    <!-- ============ 02 SKILL CHAIN ============ -->
+    <section id="skillchain">
+      <div class="eyebrow"><span class="n">02</span> The process layer</div>
+      <h2>Eight skills, each owning one phase of the work</h2>
+      <p class="lede">
+        This is the part most people skip when they start using AI coding tools — they go straight to
+        "build me X." The entire value of this framework is that it refuses to let you do that. Idea,
+        design decision, implementation, and proof are four different jobs with four different skills,
+        and each one hands off to the next with a real file as the artifact — not a chat message that
+        evaporates when the context window rolls over.
+      </p>
+
+      <div class="skillchain">
+
+        <div class="skillcard">
+          <div class="skillcard-head">
+            <span class="skillcard-num">0</span>
+            <span class="skillcard-cmd">brainstorming</span>
+            <span class="skillcard-role">precursor — always first</span>
+          </div>
+          <div class="skillcard-body">
+            <p><strong>Job:</strong> explore intent, requirements and design <em>before</em> anything gets
+            built or even scoped. This is the one skill the framework insists on unconditionally —
+            "you MUST use this before any creative work." It's the guard against the single most common
+            failure mode with AI tools: an agent that confidently builds the wrong thing fast.</p>
+            <div class="iorow"><div class="k2">Trigger</div><div class="v2">Any new feature, component, or behavior change — before /scope or /architect run</div></div>
+            <div class="iorow"><div class="k2">Produces</div><div class="v2">A clarified understanding — feeds directly into /scope or /architect, not a file of its own</div></div>
+          </div>
+        </div>
+
+        <div class="skillcard">
+          <div class="skillcard-head">
+            <span class="skillcard-num">1</span>
+            <span class="skillcard-cmd">/scope</span>
+            <span class="skillcard-role">WHAT to build</span>
+          </div>
+          <div class="skillcard-body">
+            <p><strong>Job:</strong> turns a product idea into a living, <em>coarse</em> scope — deliberately
+            not a detailed spec. Plans a new product, plans the next slice of an existing one, enrolls one
+            named feature, or — run with no argument — reconciles the scope against what actually shipped
+            and queues up what's next.</p>
+            <div class="iorow"><div class="k2">Reads</div><div class="v2"><code>AGENTS.md</code>, prior scope state</div></div>
+            <div class="iorow"><div class="k2">Writes</div><div class="v2"><code>docs/scope/</code></div></div>
+            <div class="iorow"><div class="k2">Hands off to</div><div class="v2">/architect for design, /develop for build</div></div>
+          </div>
+        </div>
+
+        <div class="skillcard">
+          <div class="skillcard-head">
+            <span class="skillcard-num">2</span>
+            <span class="skillcard-cmd">/architect</span>
+            <span class="skillcard-role">HOW — the decision owner</span>
+          </div>
+          <div class="skillcard-body">
+            <p><strong>Job:</strong> runs whenever a <em>load-bearing</em> technical decision is unmade —
+            choosing between approaches, designing a feature or page, picking a piece of the stack, or
+            when <code class="mono">/develop</code> itself hits a decision it isn't allowed to make silently
+            and routes back here. Asks deep questions, recommends an answer, and is the sole owner of every
+            spec file — nothing else in the chain is allowed to write one.</p>
+            <div class="iorow"><div class="k2">Reads</div><div class="v2"><code>AGENTS.md</code>, <code>docs/scope/</code></div></div>
+            <div class="iorow"><div class="k2">Writes</div><div class="v2"><code>docs/specs/</code> — the approved build spec</div></div>
+            <div class="iorow"><div class="k2">Triggers on</div><div class="v2">"should we use X or Y," "how should this be structured," a stack choice</div></div>
+          </div>
+        </div>
+
+        <div class="skillcard">
+          <div class="skillcard-head">
+            <span class="skillcard-num">3</span>
+            <span class="skillcard-cmd">/develop</span>
+            <span class="skillcard-role">BUILD — and refuse to guess</span>
+          </div>
+          <div class="skillcard-body">
+            <p><strong>Job:</strong> builds a feature, page, component, API, service or data slice from an
+            <em>approved</em> design. Its most important behavior is what it does when a decision is still
+            open and no spec records an answer: it <strong>stops</strong> and routes you to
+            <code class="mono">/architect</code> instead of guessing. When a spec does exist, it reads that
+            spec plus <code class="mono">AGENTS.md</code>, builds, and advances the scope state to reflect
+            what shipped.</p>
+            <div class="iorow"><div class="k2">Reads</div><div class="v2"><code>docs/specs/</code>, <code>AGENTS.md</code></div></div>
+            <div class="iorow"><div class="k2">Writes</div><div class="v2">actual source code, plus scope-status updates</div></div>
+            <div class="iorow"><div class="k2">Can refuse</div><div class="v2">Yes — bounces to /architect on an undecided, load-bearing question</div></div>
+          </div>
+        </div>
+
+        <div class="skillcard">
+          <div class="skillcard-head">
+            <span class="skillcard-num">4</span>
+            <span class="skillcard-cmd">/check verify</span>
+            <span class="skillcard-role">PROVE it does what the spec says</span>
+          </div>
+          <div class="skillcard-body">
+            <p><strong>Job:</strong> drives the <em>real, running</em> app to prove behavior against the
+            spec — every acceptance criterion actually met, every surface actually built. Not a type-check,
+            not a unit test: an agent clicking through the real thing the way a human QA pass would. Runs
+            right after <code class="mono">/develop</code>.</p>
+            <div class="iorow"><div class="k2">Reads</div><div class="v2"><code>docs/specs/</code>'s acceptance criteria</div></div>
+            <div class="iorow"><div class="k2">Writes</div><div class="v2"><code>docs/reviews/</code> — never touches code</div></div>
+          </div>
+        </div>
+
+        <div class="skillcard">
+          <div class="skillcard-head">
+            <span class="skillcard-num">5</span>
+            <span class="skillcard-cmd">/check review</span>
+            <span class="skillcard-role">A second, uninvested opinion</span>
+          </div>
+          <div class="skillcard-body">
+            <p><strong>Job:</strong> a senior code review run on a <em>fresh model</em> — one that did not
+            write the code, and has no stake in defending it. Runs before a PR, not before verify. The point
+            is structural: the model that just spent an hour implementing something is the worst-positioned
+            reviewer of its own work — it's primed to see what it meant to write, not what's actually there.</p>
+            <div class="iorow"><div class="k2">Reads</div><div class="v2">the diff, cold — no implementation context carried over</div></div>
+            <div class="iorow"><div class="k2">Writes</div><div class="v2"><code>docs/reviews/</code> — never edits code</div></div>
+          </div>
+        </div>
+
+        <div class="skillcard">
+          <div class="skillcard-head">
+            <span class="skillcard-num">6</span>
+            <span class="skillcard-cmd">/test</span>
+            <span class="skillcard-role">lock in the behavior</span>
+          </div>
+          <div class="skillcard-body">
+            <p><strong>Job:</strong> writes the test suite for whatever was just built or changed. Targets
+            the uncommitted diff automatically — you don't point it at files by hand. Reads a saved
+            <code class="mono">test preferences.json</code> for your framework of choice (asks once, remembers
+            after), and picks a strategy per file: happy path, edge cases, error states, accessibility —
+            not the same shallow "renders without crashing" test on everything.</p>
+            <div class="iorow"><div class="k2">Reads</div><div class="v2">uncommitted diff, saved test framework preference</div></div>
+            <div class="iorow"><div class="k2">Writes</div><div class="v2">real test files, matched to what actually changed</div></div>
+          </div>
+        </div>
+
+        <div class="skillcard">
+          <div class="skillcard-head">
+            <span class="skillcard-num">7</span>
+            <span class="skillcard-cmd">/document</span>
+            <span class="skillcard-role">hand-off prose</span>
+          </div>
+          <div class="skillcard-body">
+            <p><strong>Job:</strong> drafts a PR description, a changelog entry, or release notes straight
+            from the real diff and commit history, once a change is actually ready to hand off. Output is
+            prose only — it never touches code or runs git commands itself, which matters if (like this
+            project) your standing preference is "give me the git command, don't commit it yourself."</p>
+            <div class="iorow"><div class="k2">Reads</div><div class="v2">the real diff and commit log</div></div>
+            <div class="iorow"><div class="k2">Writes</div><div class="v2">prose only — PR body, changelog, release note</div></div>
+          </div>
+        </div>
+
+        <div class="skillcard">
+          <div class="skillcard-head">
+            <span class="skillcard-num">8</span>
+            <span class="skillcard-cmd">/sync</span>
+            <span class="skillcard-role">close the loop</span>
+          </div>
+          <div class="skillcard-body">
+            <p><strong>Job:</strong> the last step, run after a change actually ships — not when it's merely
+            approved. Makes surgical, line-level edits back into <code class="mono">AGENTS.md</code>, the
+            scope docs, and spec statuses, reconciling what the contract file claims against what's actually
+            true. Critically, it <em>never</em> rewrites a whole section or curated prose — it updates status
+            lines, it doesn't restructure your judgment calls.</p>
+            <div class="iorow"><div class="k2">Reads</div><div class="v2">what actually shipped vs. what the docs currently claim</div></div>
+            <div class="iorow"><div class="k2">Writes</div><div class="v2">surgical edits to <code>AGENTS.md</code>, <code>docs/scope/</code>, spec statuses</div></div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ============ 03 GOLDEN PATH ============ -->
+    <section id="goldenpath">
+      <div class="eyebrow"><span class="n">03</span> Put together</div>
+      <h2>What one real feature actually goes through</h2>
+      <p class="lede">
+        Here's the chain end to end, as it plays out on a single piece of work — say, a new automation
+        that needs its own background job, a database table, and a dashboard page.
+      </p>
+
+      <div class="pipeline">
+        <div class="pstep" data-n="1"><div class="ph">Brainstorm the idea</div><div class="pd">What problem is this solving, for whom, and what does "working" actually look like — before anything is written down as a plan.</div></div>
+        <div class="pstep" data-n="2"><div class="ph">/scope it</div><div class="pd">Add it to the living scope doc as the next coarse slice of work. Not detailed yet — just "this is next, here's roughly why."</div></div>
+        <div class="pstep" data-n="3"><div class="ph">/architect the load-bearing decisions</div><div class="pd">Which database shape, which third-party API, sync vs. async, where the logic lives. Written to a real spec file, not left implicit.</div></div>
+        <div class="pstep" data-n="4"><div class="ph">/develop against that spec</div><div class="pd">Implementation happens strictly against the approved spec — if something's still undecided, it bounces back to step 3 instead of guessing.</div></div>
+        <div class="pstep" data-n="5"><div class="ph">/check verify</div><div class="pd">Drive the real app. Does every acceptance criterion in the spec actually hold, for real, right now?</div></div>
+        <div class="pstep" data-n="6"><div class="ph">/test</div><div class="pd">Lock the behavior in so a later, unrelated change can't silently break it.</div></div>
+        <div class="pstep" data-n="7"><div class="ph">/check review</div><div class="pd">A fresh model reads the diff cold, before it goes anywhere near a pull request.</div></div>
+        <div class="pstep" data-n="8"><div class="ph">/document</div><div class="pd">A PR description or changelog entry, generated from what actually changed — not written from memory after the fact.</div></div>
+        <div class="pstep" data-n="9"><div class="ph">/sync</div><div class="pd">The scope doc, the spec, and AGENTS.md all get updated to say what's actually true now. The contract file never goes stale.</div></div>
+      </div>
+
+      <div class="callout good" style="margin-top:22px;">
+        <span class="ic">✓</span>
+        <p>Notice what never happens in this chain: Claude writing code because you asked for a feature in
+        one sentence. Every step that touches the filesystem is gated by a step that produced a written
+        artifact first — a scope entry, a spec, test files, a review note. That's the entire trick. It's
+        slower per feature and dramatically faster per month, because nothing has to be re-explained or
+        silently re-decided the next session.</p>
+      </div>
+    </section>
+
+    <!-- ============ 04 AGENTS.MD ============ -->
+    <section id="agentsmd">
+      <div class="eyebrow"><span class="n">04</span> The project layer</div>
+      <h2>AGENTS.md — the file Claude re-reads on every request</h2>
+      <p class="lede">
+        If the skill chain above is the process every project should run, <code class="mono">AGENTS.md</code>
+        is what makes that process actually know <em>this</em> codebase. It's the first thing read, every
+        single time, per this project's own workflow rule — not loaded once and trusted to persist in
+        memory. What follows is the real file from a production multi-agent SaaS, section by section, with
+        why each one exists and what breaks without it.
+      </p>
+
+      <div class="card" style="margin-bottom:26px;">
+        <div class="card-head"><span class="tag">excerpt</span><span class="fname">AGENTS.md · opening lines, verbatim</span></div>
+        <pre class="code"><span class="c"># AGENTS.md</span>
+
+You are a <span class="k">principal-level full-stack engineer and AI implementation agent</span>
+working on <span class="k">[the product]</span> — <span class="k">[one-line identity statement]</span>.
+
+Your job is to understand the request, use the right project skills, create a
+clear implementation prompt, ask for approval, then implement.</pre>
+      </div>
+
+      <div class="prose dim" style="margin-bottom:28px;">
+        <p>
+          Two things in that opening paragraph are doing real work. First, the role assignment —
+          <em>"principal-level engineer,"</em> not "helpful assistant" — sets the bar for what counts as
+          an acceptable answer; it changes how thoroughly Claude inspects existing code before touching it.
+          Second, that last sentence is the entire workflow compressed to one line: understand → use
+          skills → <strong>write a prompt</strong> → <strong>get approval</strong> → implement. Every other
+          section in the file exists to make one word in that sentence concrete.
+        </p>
+      </div>
+
+      <div class="anatomy" id="am-1">
+
+        <div class="anat-row">
+          <div class="anat-key"><div class="sec">§1</div><div class="title">Product</div></div>
+          <div class="anat-body">
+            <p>
+              States what the thing <em>is</em> in one sentence, then lists every piece to build —
+              <strong>in build order</strong> — and keeps that list alive as a running build log: each
+              entry gets annotated in place as phases ship, noting which phase is done, which approved
+              prompt file proved it, and what was deliberately cut from scope. This is the section
+              <code class="mono">/sync</code> edits most often — it's the project's own changelog, living
+              inside the contract file instead of scattered across commit messages nobody re-reads.
+            </p>
+            <p>
+              Just as important as what's listed: a dedicated "explicitly deferred" block at the end,
+              naming work that is <em>not</em> happening yet and why — so an idea that got reasonably
+              rejected in week one doesn't quietly resurface as "obvious scope" in week twelve.
+            </p>
+            <pre class="code"><span class="c">Build only, in this order:</span>
+- <span class="k">[piece 1]</span>, end-to-end: background job(s), schema, and the UI surface showing it running
+- <span class="k">[piece 2]</span> — full design in <span class="s">docs/specs/&lt;name&gt;.md</span>.
+  Phase 1 ([...]) is complete per <span class="s">prompts/&lt;name&gt;-phase-1-[...].md</span>.
+  Phase 2 ([...]) is complete per <span class="s">prompts/&lt;name&gt;-phase-2-[...].md</span>.
+  No further phases currently planned.
+
+<span class="c">Explicitly deferred — do not build unless the user asks for a new plan first:</span>
+- <span class="k">[idea considered and intentionally not built yet, with the actual reason]</span>
+
+Do not overbuild.</pre>
+          </div>
+        </div>
+
+        <div class="anat-row" id="am-2">
+          <div class="anat-key"><div class="sec">§2</div><div class="title">Workflow</div></div>
+          <div class="anat-body">
+            <p>
+              The eleven-step loop every single request must run — this is where the skill chain from
+              §02 above gets wired directly into project rules, by name. It's the section that turns
+              "an LLM with file access" into something that behaves like a disciplined engineer on a
+              deadline it respects.
+            </p>
+            <pre class="code"><span class="c">For every implementation request:</span>
+
+1. Read AGENTS.md.
+2. Read the skills explicitly mentioned by the user.
+3. Read clearly needed supporting skills from §3's locked list.
+4. Inspect relevant existing code.
+5. Ask a focused question only if the task has meaningful ambiguity.
+6. For a new feature/phase: run the platform-capability audit (§12)
+   before scoping anything.
+7. Create a detailed prompt file in prompts/.
+8. Ask: <span class="s">"I prepared the implementation prompt at prompts/&lt;file&gt;.md.
+   Is this good to execute?"</span>  <span class="k">← the hard gate</span>
+9. On approval, re-read the approved file and implement it strictly.
+10. Run available checks (§15) — <span class="s">check verify</span> against acceptance
+    criteria, <span class="s">test</span> for the suite.
+11. Share exact steps to test or run the completed feature.
+
+Before merge: <span class="s">check review</span> for an independent second-model read.
+After shipping: <span class="s">sync</span>, add a progress-log entry, <span class="s">document</span>
+if a PR description or changelog entry is needed.
+
+Do not code before creating the prompt unless explicitly told to skip it.</pre>
+            <p>
+              The line worth re-reading twice is step 8. It's not a suggestion — it's a literal string
+              Claude is instructed to output and then <em>stop</em>. Nothing downstream happens without a
+              human typing "yes." On a project with months of continuous changes, that single gate is what
+              keeps an agency owner, a solo founder, or a team lead from having to review a wall of diffs
+              after the fact instead of a focused plan before the fact.
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+      <h3 id="am-3" style="margin-top:42px;">§3–§4 — the toolbox and the unit of work</h3>
+      <div class="anatomy">
+
+        <div class="anat-row">
+          <div class="anat-key"><div class="sec">§3</div><div class="title">Skills</div></div>
+          <div class="anat-body">
+            <p>
+              A closed list of the only skills Claude may use on this repo — each with a one-line reason
+              tied to <em>this specific project</em>, not a generic "best practice" blurb. The file states
+              outright: <code class="mono">Do not invent new skills.</code> That line matters more than it
+              looks — without it, an agent under time pressure will happily improvise a plausible-sounding
+              approach instead of using the vetted one, and you won't notice until it's already in the codebase.
+            </p>
+            <pre class="code"><span class="c">Use only these skills:</span>
+
+- <span class="k">trigger-dev</span> — background jobs, scheduling, retries/idempotency
+- <span class="k">supabase</span> — schema, migrations, RLS policies, service-role usage
+- <span class="k">ai-sdk</span> — any LLM call inside a background job
+- <span class="k">frontend-design</span> — loaded before any UI work; this dashboard
+  is the portfolio, it can't look like a stock admin template
+- <span class="k">check</span> / <span class="k">test</span> / <span class="k">document</span> / <span class="k">sync</span> — the process layer, §02 above
+
+Do not invent new skills. For anything with no dedicated project skill,
+use existing project patterns and the vendor's own docs instead.</pre>
+            <p>
+              One more detail worth copying: this project also ships <em>scoped</em> versions of some
+              skills inside <code class="mono">.claude/skills/</code> — project-specific variants that
+              override the generic global skill whenever the files being touched live under this repo.
+              The rule is simple: the project's own conventions always win over a generic default.
+            </p>
+          </div>
+        </div>
+
+        <div class="anat-row">
+          <div class="anat-key"><div class="sec">§4</div><div class="title">Prompt files</div></div>
+          <div class="anat-body">
+            <p>
+              The required shape of the plan Claude writes at step 7 of the workflow, before anything gets
+              approved. Ten fields, every time — this is what makes the approval gate meaningful instead of
+              a rubber stamp. Approving a vague paragraph is nothing; approving ten concrete, checkable
+              commitments is a real decision.
+            </p>
+            <div class="spec-grid">
+              <div class="spec-item"><span class="chk">✓</span><div>Goal — the one thing this delivers</div></div>
+              <div class="spec-item"><span class="chk">✓</span><div>Skills read — named, not assumed</div></div>
+              <div class="spec-item"><span class="chk">✓</span><div>Existing code inspected</div></div>
+              <div class="spec-item"><span class="chk">✓</span><div>Decisions / assumptions, made explicit</div></div>
+              <div class="spec-item"><span class="chk">✓</span><div>Files likely to change</div></div>
+              <div class="spec-item"><span class="chk">✓</span><div>Implementation requirements</div></div>
+              <div class="spec-item"><span class="chk">✓</span><div>Security requirements — citing the rule by section #</div></div>
+              <div class="spec-item"><span class="chk">✓</span><div>Acceptance criteria</div></div>
+              <div class="spec-item"><span class="chk">✓</span><div>Checks to run</div></div>
+              <div class="spec-item"><span class="chk">✓</span><div>Exact manual test steps, post-implementation</div></div>
+            </div>
+            <p style="margin-top:10px;">
+              Worth noting: this applies even to <em>removing</em> something. When one real integration
+              in this project turned out to be the wrong vendor choice, pulling it back out was itself
+              written and approved as a prompt file — <code class="mono">prompts/&lt;agent&gt;-remove-&lt;vendor&gt;.md</code> —
+              not a quiet, unreviewed patch. The gate applies to subtraction exactly as much as addition.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <h3 id="am-5" style="margin-top:42px;">§5–§7 — architecture, stack, and data</h3>
+      <div class="anatomy">
+
+        <div class="anat-row">
+          <div class="anat-key"><div class="sec">§5</div><div class="title">Architecture</div></div>
+          <div class="anat-body">
+            <p>A hard layering rule, stated once and then never re-litigated per feature:</p>
+            <pre class="code"><span class="c">- UI (pages/components): displays stored data only. Must never
+  call a third-party API or contain business logic directly.
+- Server actions / thin API routes: the only layer allowed to
+  trigger a background job or read/write the database.
+- Background jobs: own all business logic, every third-party
+  API call, retries, and idempotency.
+- Database: source of truth for config, run history, records, logs.
+
+UI must never call the database or a third-party API directly —
+always through a server action or a background job.</span></pre>
+            <p>
+              This single rule is why a feature can be extracted into its own app later, or debugged by a
+              fresh session, without an archaeology project: logic is never smeared across a React
+              component "just this once."
+            </p>
+          </div>
+        </div>
+
+        <div class="anat-row">
+          <div class="anat-key"><div class="sec">§6</div><div class="title">Tech stack</div></div>
+          <div class="anat-body">
+            <p>
+              What's in — and, just as load-bearing, what's explicitly <strong>out</strong>, each with the
+              real reasoning, not just the verdict. This is the section that stops the same architecture
+              debate from reopening six weeks later when someone (human or Claude) half-remembers a tool
+              that got considered.
+            </p>
+            <pre class="code"><span class="c">Do not use:</span>
+- <span class="k">Clerk</span> — rejected in favor of [the chosen auth], already
+  free since [the data layer] is the committed choice
+- <span class="k">NextAuth</span> — would require bridging externally-issued JWTs
+  into [the DB]'s row-level security; real complexity for zero benefit
+- <span class="k">A separate backend framework</span> — [background jobs] +
+  server actions/API routes are the entire backend</pre>
+          </div>
+        </div>
+
+        <div class="anat-row">
+          <div class="anat-key"><div class="sec">§7</div><div class="title">Data model</div></div>
+          <div class="anat-body">
+            <p>
+              The shared, source-of-truth tables expected to exist from day one — written so every future
+              feature reuses the same shape instead of inventing its own variant. In this project that's
+              <code class="mono">users</code>, <code class="mono">agents</code>,
+              <code class="mono">integrations</code> (one row per external account connection — an opaque
+              reference only, never a raw credential), <code class="mono">automation_runs</code> (one row
+              per job execution), and <code class="mono">spend_log</code> (running per-period cost counters).
+              Every new feature's own tables get documented here too, each tagged with which design doc or
+              prompt file explains it — so the schema's history stays legible without digging through
+              migration files.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <h3 id="am-8" style="margin-top:42px;">§8–§12 — the standing rules that can't drift</h3>
+      <p class="lede" style="margin-bottom:18px;">
+        These are the sections worth stealing wholesale, even if nothing else in this file applies to your
+        project. Each one encodes a mistake that's easy to make exactly once, silently, per feature — until
+        it's written down as a rule every prompt file has to satisfy.
+      </p>
+      <div class="anatomy">
+
+        <div class="anat-row">
+          <div class="anat-key"><div class="sec">§8</div><div class="title">Run logging</div></div>
+          <div class="anat-body">
+            <p>
+              Every background job, on every run, writes one row at start (<code class="mono">running</code>)
+              and updates it on completion (<code class="mono">succeeded</code>/<code class="mono">failed</code>,
+              a value-generated figure, error detail on failure). The dashboard only ever reads from this
+              table — it never infers status by polling the job platform directly. This is the rule that
+              makes "show someone the automation is really running" literally true instead of aspirational.
+            </p>
+          </div>
+        </div>
+
+        <div class="anat-row">
+          <div class="anat-key"><div class="sec">§9</div><div class="title">Row isolation</div></div>
+          <div class="anat-body">
+            <p>
+              Every table carries an owner column and a row-level security policy from day one — even with
+              exactly one real user in the system today. <strong>No query may rely on "there's only one
+              user" to skip an ownership filter.</strong> Write every query as if multiple tenants' rows
+              already coexist, because eventually they will. This single discipline is what let this
+              project's single-owner tables become multi-tenant later by adding rows, not by rewriting
+              a single query.
+            </p>
+          </div>
+        </div>
+
+        <div class="anat-row">
+          <div class="anat-key"><div class="sec">§10</div><div class="title">Spend cap</div></div>
+          <div class="anat-body">
+            <p>
+              Any job step calling a paid API must check a running spend counter <em>immediately before</em>
+              the call and short-circuit — log it, mark the run failed with a clear reason, skip the call —
+              if the cap for that period is already met. The counter increments on a successful call, in
+              the same step as its own error handling. An unattended, scheduled AI pipeline with no spend
+              cap is a bill waiting to happen; this makes it structurally impossible to forget per-feature.
+            </p>
+          </div>
+        </div>
+
+        <div class="anat-row">
+          <div class="anat-key"><div class="sec">§11</div><div class="title">Depth rule</div></div>
+          <div class="anat-body">
+            <p>
+              The single most undersold rule in the whole file, and probably the most generally useful one.
+              Verbatim intent: <em>a technically-working-but-shallow rebuild — "an AI call returns a verdict,
+              upsert a record, done" — undersells the entire thing even if it passes acceptance criteria.
+              Do not ship one.</em> Before writing a prompt file for new automation logic, state explicitly
+              which real decision-making behaviors are being matched or upgraded (multi-signal reasoning
+              instead of one opaque AI verdict, the right system-of-record action, tiered human notification,
+              retry resilience, an audit trail) — and which are being deliberately dropped, and why. This is
+              the difference between a feature that reads as "an LLM call in a wrapper" and one that reads
+              as real engineering.
+            </p>
+          </div>
+        </div>
+
+        <div class="anat-row">
+          <div class="anat-key"><div class="sec">§12</div><div class="title">Platform audit</div></div>
+          <div class="anat-body">
+            <p>
+              Before scoping any new feature that touches a third-party platform, check whether that vendor
+              already ships the planned functionality natively — its own docs or in-app settings, not just
+              "the raw API could technically do this." If it does, don't build it; point the user at the
+              platform's own setting, unless there's a concrete reason this app must still own it (its own
+              audit trail, sending from the user's own branded channel, working even when the vendor's
+              native toggle is off) — and state that reason explicitly in the prompt file. This rule
+              directly cancelled real planned work in this project once a vendor's own feature set was
+              actually checked instead of assumed.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <h3 id="am-13" style="margin-top:42px;">§13–§17 — security, conventions, and the final rule</h3>
+      <div class="anatomy">
+
+        <div class="anat-row">
+          <div class="anat-key"><div class="sec">§13</div><div class="title">Security</div></div>
+          <div class="anat-body">
+            <p>An explicit list of what browser code is never allowed to touch — service-role database keys,
+            background-job secret keys, bot tokens, any third-party API key — plus the inverse: what browser
+            code is never allowed to <em>do</em> (trigger a job without a session check first, write via a
+            privileged client, call a third-party API directly). Then a living env-var table, kept in sync
+            with <code class="mono">.env.example</code>, documenting every secret's purpose and exposure:</p>
+            <div style="overflow-x:auto; margin-top:8px; border:1px solid var(--border); border-radius:8px;">
+              <table class="env-table">
+                <thead><tr><th>Variable</th><th>Purpose</th><th>Exposure</th></tr></thead>
+                <tbody>
+                  <tr><td class="vn">NEXT_PUBLIC_*_URL</td><td>Public project URL</td><td class="exp">client + server</td></tr>
+                  <tr><td class="vn">*_SERVICE_ROLE_KEY</td><td>Privileged DB access for server actions / jobs</td><td class="exp">server only</td></tr>
+                  <tr><td class="vn">*_SECRET_KEY</td><td>Background-job trigger/auth</td><td class="exp">server only</td></tr>
+                  <tr><td class="vn">&lt;VENDOR&gt;_API_KEY</td><td>Per-integration third-party key</td><td class="exp">server only</td></tr>
+                  <tr><td class="vn">&lt;PROVIDER&gt;_WEBHOOK_SECRET</td><td>Shared-secret webhook verification when the vendor has no HMAC signing</td><td class="exp">server only</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p style="margin-top:10px;">
+              The pattern worth copying isn't the specific rows — it's documenting <em>why each one is
+              shaped the way it is</em> right in the table (e.g. "this vendor has no webhook signing, so
+              this shared secret is the entire verification mechanism"), so a future session never has to
+              reverse-engineer intent from a bare variable name.
+            </p>
+          </div>
+        </div>
+
+        <div class="anat-row">
+          <div class="anat-key"><div class="sec">§14</div><div class="title">API conventions</div></div>
+          <div class="anat-body">
+            <p>
+              Prefer server actions for user-initiated mutations; thin API route handlers only for what a
+              server action genuinely can't do (inbound webhooks). Any such route validates its payload
+              with a schema library before touching the database or triggering a job — every external
+              input is untrusted until validated, no exceptions.
+            </p>
+          </div>
+        </div>
+
+        <div class="anat-row">
+          <div class="anat-key"><div class="sec">§15</div><div class="title">Commands &amp; checks</div></div>
+          <div class="anat-body">
+            <p>
+              The exact commands "run available checks" means — type-check, lint, a production build when
+              relevant — plus the explicit instruction: <code class="mono">report exact command output; do
+              not claim a check passed without running it.</code> That sentence exists because an
+              unsupervised agent will, left to its own judgment, sometimes narrate success instead of
+              demonstrating it. Writing the rule down removes the judgment call.
+            </p>
+          </div>
+        </div>
+
+        <div class="anat-row">
+          <div class="anat-key"><div class="sec">§16</div><div class="title">Extraction plan</div></div>
+          <div class="anat-body">
+            <p>
+              A step-by-step checklist for the day a feature has to leave the codebase entirely and become
+              its own standalone app (a client who needs full code ownership, for instance). Worth having
+              even if you never use it: writing it forces you to confirm your own layering rule (§5) is
+              real — if a feature's logic is genuinely isolated in its own files rather than smeared across
+              shared components, extraction is a few days of real but mechanical work. If it isn't, this
+              section is where you'd discover that the hard way instead.
+            </p>
+          </div>
+        </div>
+
+        <div class="anat-row">
+          <div class="anat-key"><div class="sec">§17</div><div class="title">Final rule</div></div>
+          <div class="anat-body">
+            <p>The whole file, compressed to a "when in doubt" checklist Claude can hold in working memory
+            without re-reading all 300-odd lines:</p>
+            <pre class="code">When in doubt:
+1. Keep it small.
+2. Use the relevant skill.
+3. Preserve the standing rules (§8–§12) on every new feature.
+4. Ask a focused question if needed.
+5. Save a prompt before coding.
+6. Ask if it's good to execute.
+7. Implement after confirmation.
+8. Run available checks.
+9. Share exact test steps.</pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 05 CONNECTION ============ -->
+    <section id="connection">
+      <div class="eyebrow"><span class="n">05</span> Where they meet</div>
+      <h2>AGENTS.md doesn't replace the skill chain — it calls it by name</h2>
+      <p class="lede">
+        Look back at §2's workflow block: step 7 is "create a prompt file," step 10 names
+        <code class="mono">check verify</code> and <code class="mono">test</code> explicitly, and the
+        line right after step 11 names <code class="mono">check review</code>,
+        <code class="mono">sync</code>, and <code class="mono">document</code> by their exact command
+        names. The contract file is what makes the generic skill chain <em>project-aware</em> — it tells
+        Claude precisely when, in this specific codebase's lifecycle, each general-purpose skill gets
+        invoked, and what it's allowed to touch when it runs.
+      </p>
+
+      <div class="principles">
+        <div class="principle">
+          <div class="pn">WITHOUT AGENTS.md</div>
+          <h4>The skill chain still runs</h4>
+          <p>...but Claude re-derives your architecture rules, your rejected tech choices, and your naming
+          conventions from scratch every session — and will eventually contradict a decision it already
+          made, because nothing wrote that decision down anywhere it re-reads.</p>
+        </div>
+        <div class="principle">
+          <div class="pn">WITHOUT THE SKILL CHAIN</div>
+          <h4>AGENTS.md has nothing to enforce</h4>
+          <p>A contract that says "write a prompt file, get approval" is just prose unless something
+          actually structures how that prompt gets written, reviewed, tested, and reconciled afterward.
+          The skills are the enforcement mechanism for the contract's own rules.</p>
+        </div>
+        <div class="principle">
+          <div class="pn">TOGETHER</div>
+          <h4>A closed, repeatable loop</h4>
+          <p>Generic process (any project) plus specific memory (this project) is what lets a build stay
+          coherent across dozens of sessions and months of calendar time — which is the actual, boring,
+          unglamorous hard part of building real software with AI.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 06 REPLICATE ============ -->
+    <section id="replicate">
+      <div class="eyebrow"><span class="n">06</span> Take it with you</div>
+      <h2>Setting this up on your own project</h2>
+      <p class="lede">
+        You don't need a nine-section product spec to start. You need these, in this order.
+      </p>
+
+      <div class="checklist">
+        <div class="citem">
+          <div class="num">1</div>
+          <div><h4>Install the workflow skills</h4>
+          <p>Get the scope/architect/develop/check/test/document/sync chain from
+          <a href="https://jsmastery.com/workflow-guides" target="_blank" rel="noopener">jsmastery.com/workflow-guides</a>
+          before writing a single line of your own contract file — it's the enforcement layer the contract
+          needs underneath it.</p></div>
+        </div>
+        <div class="citem">
+          <div class="num">2</div>
+          <div><h4>Bootstrap AGENTS.md with /audit, then edit it by hand</h4>
+          <p>Run <code class="mono">/audit</code> on your repo root (or one subfolder at a time on an
+          existing codebase) for a first draft, then rewrite §1 and §6 yourself — the product narrative and
+          the rejected-tools reasoning are judgment calls no audit can make for you.</p></div>
+        </div>
+        <div class="citem">
+          <div class="num">3</div>
+          <div><h4>Write §2 (workflow) and §4 (prompt-file spec) before anything else</h4>
+          <p>These two sections are what make the approval gate real. Everything else in the file can grow
+          incrementally; these two need to exist from commit one.</p></div>
+        </div>
+        <div class="citem">
+          <div class="num">4</div>
+          <div><h4>Lock a skill allowlist and say "do not invent new skills"</h4>
+          <p>List only what this project actually needs, each with a one-line reason specific to this
+          codebase. An unbounded list is functionally the same as no list.</p></div>
+        </div>
+        <div class="citem">
+          <div class="num">5</div>
+          <div><h4>Pin the one or two architecture rules your codebase can't survive without</h4>
+          <p>Not an exhaustive style guide — the specific layering or data-isolation rule that, if it
+          drifted even once, would be expensive to unwind later.</p></div>
+        </div>
+        <div class="citem">
+          <div class="num">6</div>
+          <div><h4>Write down what you rejected, and why</h4>
+          <p>"Not X — Y would require [specific real cost]" prevents the same debate from reopening a
+          month later with nobody around who remembers the first conversation.</p></div>
+        </div>
+        <div class="citem">
+          <div class="num">7</div>
+          <div><h4>Run the full loop once, on purpose, before trusting it</h4>
+          <p>Brainstorm → scope → architect → develop → verify → test → review → document → sync, on one
+          real, small feature. Everything about how the two layers hand off to each other becomes obvious
+          the first time you watch it happen end to end.</p></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:26px;">
+        <div class="card-head"><span class="tag">template</span><span class="fname">AGENTS.md · minimal skeleton</span></div>
+        <pre class="code"><span class="c"># AGENTS.md</span>
+
+You are working on <span class="k">[project]</span> — <span class="k">[one-line identity]</span>.
+Understand the request, use the right skills, write a prompt, get approval, implement.
+
+<span class="c">## 1. Product</span>
+Build only, in this order: <span class="k">[ordered list, updated in place as it ships]</span>
+Explicitly deferred: <span class="k">[rejected-for-now ideas, with the real reason]</span>
+
+<span class="c">## 2. Workflow</span>
+1. Read this file.  2. Read named/needed skills.  3. Inspect existing code.
+4. Ask only if genuinely ambiguous.  5. /scope + /architect anything load-bearing.
+6. Write a prompt file in prompts/.
+7. Ask: "I prepared prompts/&lt;file&gt;.md — good to execute?"  <span class="k">← hard gate</span>
+8. On approval, /develop strictly against that file.
+9. /check verify, /test, /check review, /document, /sync.
+
+<span class="c">## 3. Skills</span>
+Use only: <span class="k">[closed list, one reason each]</span>. Do not invent new skills.
+
+<span class="c">## 4. Prompt files require</span>
+goal · skills read · code inspected · decisions · files touched ·
+requirements · security rule cited · acceptance criteria · checks · manual test steps
+
+<span class="c">## 5. Architecture rules that must never drift</span>
+<span class="k">[the one or two layering/isolation rules this codebase can't survive without]</span>
+
+<span class="c">## 6. Explicitly out</span>
+<span class="k">[rejected option — the actual reason, so the debate never reopens]</span></pre>
+      </div>
+
+      <div class="callout" style="margin-top:22px;">
+        <span class="ic">!</span>
+        <p>The one failure mode to actually watch for: letting <code class="mono">AGENTS.md</code> grow
+        stale. A contract file that claims something is "not yet built" six weeks after it shipped is worse
+        than no contract file — it actively misleads the next session. That's the entire reason
+        <code class="mono">/sync</code> exists as its own dedicated, mandatory last step, not an optional
+        cleanup task. Run it every time something ships, not "when you remember to."</p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer>
+  <div class="foot-inner">
+    <span class="mono">Workflow skills: jsmastery.com/workflow-guides · Contract file: AGENTS.md</span>
+    <span class="mono">Built with Claude Code</span>
+  </div>
+</footer>
+
+<script>
+(function(){
+  try{
+    var links = Array.prototype.slice.call(document.querySelectorAll('#railList a'));
+    var sections = links.map(function(a){ return document.querySelector(a.getAttribute('href')); }).filter(Boolean);
+    function onScroll(){
+      var y = window.scrollY + 110;
+      var current = sections[0];
+      for (var i=0;i<sections.length;i++){
+        if (sections[i].offsetTop <= y) current = sections[i];
+      }
+      links.forEach(function(a){ a.classList.remove('active'); });
+      var idx = sections.indexOf(current);
+      if (idx > -1) links[idx].classList.add('active');
+    }
+    document.addEventListener('scroll', onScroll, { passive:true });
+    onScroll();
+  } catch(e){}
+})();
+</script>
+
+</body></html>
